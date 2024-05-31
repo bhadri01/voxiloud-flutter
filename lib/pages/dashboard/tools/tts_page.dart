@@ -1,5 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
+import 'package:path_provider/path_provider.dart';
 
 class TtsPage extends StatefulWidget {
   const TtsPage({super.key, this.textData = ""});
@@ -21,11 +30,81 @@ class _TtsPageState extends State<TtsPage> {
   int _endOffset = 0;
   List<Map<String, String>> _voices = [];
   String? _selectedVoice;
-  double _speechRate = 1.0;
+  List<Map<String, String>> filteredVoices = [];
+  double _speechRate = 0.5;
+
+  Future<void> requestPermissions(BuildContext context) async {
+    var status = await Permission.storage.status;
+
+    if (status.isGranted) {
+      // Permission is already granted
+      print("Storage permission already granted.");
+    } else if (status.isDenied) {
+      // Permission is denied but not permanently
+      if (await Permission.storage.request().isGranted) {
+        print("Storage permission granted after request.");
+      } else {
+        _showPermissionDeniedDialog(context);
+      }
+    } else if (status.isPermanentlyDenied) {
+      // Permission is permanently denied
+      _showPermissionPermanentlyDeniedDialog(context);
+    }
+  }
+
+  void _showPermissionDeniedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Permission Denied'),
+          content: Text(
+              'Storage permission is needed to save and retrieve audio files. Please grant the permission.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPermissionPermanentlyDeniedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Permission Permanently Denied'),
+          content: Text(
+              'Storage permission has been permanently denied. Please enable it from the app settings.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                openAppSettings();
+                Navigator.of(context).pop();
+              },
+              child: Text('Open Settings'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
     super.initState();
+    requestPermissions(context);
     flutterTts = FlutterTts();
     _textController = TextEditingController(text: widget.textData);
     textProcess();
@@ -77,9 +156,8 @@ class _TtsPageState extends State<TtsPage> {
   Future<void> _getVoices() async {
     List<dynamic> voices = await flutterTts.getVoices;
     setState(() {
-      _voices = voices.map((voice) {
-        return Map<String, String>.from(voice);
-      }).toList();
+      _voices = voices.map((voice) => Map<String, String>.from(voice)).toList();
+      filteredVoices = _voices;
       if (_voices.isNotEmpty) {
         _selectedVoice = _voices.first['name'];
       }
@@ -93,9 +171,7 @@ class _TtsPageState extends State<TtsPage> {
   }
 
   Future _speak() async {
-    if (_selectedVoice != null) {
-      await flutterTts.setVoice({"name": _selectedVoice!});
-    }
+    await flutterTts.setVoice({"name": _selectedVoice!});
     await flutterTts.setSpeechRate(_speechRate);
 
     if (ttsState == TtsState.paused) {
@@ -184,11 +260,24 @@ class _TtsPageState extends State<TtsPage> {
       appBar: AppBar(
         title: const Text('TTS'),
         actions: [
-          if (!_isEditing)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: _toggleEditing,
-            )
+          Row(
+            children: [
+              Visibility(
+                visible: !_isEditing,
+                child: IconButton(
+                  icon: const Icon(Icons.edit_rounded),
+                  onPressed: _toggleEditing,
+                ),
+              ),
+              Visibility(
+                visible: !_isEditing,
+                child: IconButton(
+                  icon: const Icon(Icons.more_vert_rounded),
+                  onPressed: () => _showBottomSheet(context),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       body: GestureDetector(
@@ -211,11 +300,12 @@ class _TtsPageState extends State<TtsPage> {
                           TextFormField(
                             controller: _textController,
                             keyboardType: TextInputType.multiline,
+                            minLines: 10,
                             maxLines: null, // Allows for unlimited lines
                             decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              labelText: 'Enter text',
-                            ),
+                                border: OutlineInputBorder(),
+                                labelText: 'Enter text',
+                                alignLabelWithHint: true),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter some text';
@@ -248,58 +338,94 @@ class _TtsPageState extends State<TtsPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  IconButton(
-                    onPressed: _prevPara,
-                    icon: const Icon(
-                      Icons.skip_previous_rounded,
-                      size: 26,
-                    ),
-                  ),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Material(
-                      color: Theme.of(context).colorScheme.primary,
-                      shape: const CircleBorder(),
-                      child: IconButton(
-                        icon: Icon(
-                          ttsState == TtsState.playing
-                              ? Icons.pause
-                              : Icons.play_arrow,
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          size: 26,
-                        ),
-                        onPressed: () {
-                          if (ttsState == TtsState.playing) {
-                            _pause();
-                          } else {
-                            _speak();
-                          }
-                        },
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: GestureDetector(
+                      onTap: () => _showVoiceSelectionSheet(context),
+                      child: const Column(
+                        children: [
+                          Icon(
+                            Iconsax.voice_cricle,
+                            size: 26,
+                          ),
+                          Text(
+                            'voice',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: _nextPara,
-                    icon: const Icon(
-                      Icons.skip_next_rounded,
-                      size: 26,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: _prevPara,
+                        icon: const Icon(
+                          Icons.skip_previous_rounded,
+                          size: 26,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Material(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: const CircleBorder(),
+                          child: IconButton(
+                            icon: Icon(
+                              ttsState == TtsState.playing
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
+                              size: 26,
+                            ),
+                            onPressed: () {
+                              if (ttsState == TtsState.playing) {
+                                _pause();
+                              } else {
+                                _speak();
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _nextPara,
+                        icon: const Icon(
+                          Icons.skip_next_rounded,
+                          size: 26,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: GestureDetector(
+                      onTap: _showSpeedSelectionSheet,
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.speed_rounded,
+                            size: 26,
+                          ),
+                          Text(
+                            '${_speechRate.toString()}x',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: _showVoiceSelectionSheet,
-                    child: Text('Select Voice'),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _showSpeedSelectionSheet,
-                    child: Text('Select Speed'),
                   ),
                 ],
               ),
@@ -367,52 +493,114 @@ class _TtsPageState extends State<TtsPage> {
     return spans;
   }
 
-  void _showVoiceSelectionSheet() {
+  void _filterVoices(String query) {
+    setState(() {
+      filteredVoices = _voices
+          .where((voice) =>
+              voice['name']!.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void _showVoiceSelectionSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isDismissible: false,
+      isScrollControlled: true,
       builder: (context) {
         return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            String? filter;
-            List<Map<String, String>> filteredVoices = _voices;
-
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Search',
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        filter = value;
-                        filteredVoices = _voices
-                            .where((voice) => voice['name']!
-                                .toLowerCase()
-                                .contains(filter!.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    children: filteredVoices.map((voice) {
-                      return ListTile(
-                        title: Text(voice['name']!),
-                        onTap: () {
+          builder: (context, setState) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                height: 0.8 * MediaQuery.of(context).size.height,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextFormField(
+                        onChanged: (value) {
                           setState(() {
-                            _selectedVoice = voice['name'];
+                            _filterVoices(value);
                           });
-                          Navigator.pop(context);
                         },
-                      );
-                    }).toList(),
-                  ),
+                        decoration: const InputDecoration(
+                          labelText: 'Search',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: filteredVoices.length,
+                        itemBuilder: (context, index) {
+                          return CheckboxListTile(
+                            value:
+                                _selectedVoice == filteredVoices[index]['name'],
+                            title: Text(filteredVoices[index]['name']!),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedVoice = filteredVoices[index]['name'];
+                              });
+                              // Unfocus the input field
+                              FocusScope.of(context).unfocus();
+                            },
+                            controlAffinity: ListTileControlAffinity.leading,
+                            secondary:
+                                _selectedVoice == filteredVoices[index]['name']
+                                    ? const Icon(Icons.check)
+                                    : null,
+                          );
+                        },
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .secondaryContainer,
+                              foregroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              FocusScope.of(context).unfocus();
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        Expanded(
+                          flex: 5,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              FocusScope.of(context).unfocus();
+                            },
+                            child: const Text('Select'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              ),
             );
           },
         );
@@ -424,67 +612,325 @@ class _TtsPageState extends State<TtsPage> {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
+        // List of speed values
+        final List<double> speedValues = [
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0
+        ];
+
+        return SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: speedValues.map((speed) {
+              return ListTile(
+                title: Text('${speed}x'),
+                trailing: _speechRate == speed
+                    ? Icon(Icons.check,
+                        color: Theme.of(context).colorScheme.primary)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _speechRate = speed;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showBottomSheet(BuildContext context) {
+    _stop();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      builder: (context) {
+        return Stack(
           children: [
-            ListTile(
-              title: Text('0.5x'),
-              onTap: () {
-                setState(() {
-                  _speechRate = 0.5;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: Text('0.75x'),
-              onTap: () {
-                setState(() {
-                  _speechRate = 0.75;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: Text('1.0x'),
-              onTap: () {
-                setState(() {
-                  _speechRate = 1.0;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: Text('1.25x'),
-              onTap: () {
-                setState(() {
-                  _speechRate = 1.25;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: Text('1.5x'),
-              onTap: () {
-                setState(() {
-                  _speechRate = 1.5;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: Text('2.0x'),
-              onTap: () {
-                setState(() {
-                  _speechRate = 2.0;
-                });
-                Navigator.pop(context);
-              },
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.translate_rounded),
+                      title: const Text('Translate'),
+                      onTap: () {
+                        // Handle TTS tap
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TranslatePage(
+                              queryParameters: {
+                                "text": _textController.text,
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.download_rounded),
+                      title: const Text('Download Audio'),
+                      onTap: () {
+                        // Navigate to the TTS route with the input text data
+                        Navigator.pop(context);
+                        FocusScope.of(context).unfocus();
+                        _convertTextToSpeech();
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.share_rounded),
+                      title: const Text('Share'),
+                      onTap: () async {
+                        // Share the input text data
+                        if (_textController.text.isNotEmpty) {
+                          await Share.share(_textController.text);
+                        }
+
+                        // ignore: use_build_context_synchronously
+                        FocusScope.of(context).unfocus();
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.save_rounded),
+                      title: const Text('Save'),
+                      onTap: () {
+                        // Navigate to the TTS route with the input text data
+                        Navigator.pop(context);
+                        FocusScope.of(context).unfocus();
+                        _showSaveBottomSheet(context);
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.close_rounded,
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                      title: Text(
+                        'Close',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.tertiary,
+                        ),
+                      ),
+                      onTap: () {
+                        // Navigate to the TTS route with the input text data
+                        Navigator.pop(context);
+                        FocusScope.of(context).unfocus();
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         );
       },
     );
+  }
+
+  void _showSaveBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      builder: (context) {
+        String title = '';
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                physics: const NeverScrollableScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: SizedBox(
+                          width: double.infinity, child: Text("Save as")),
+                    ),
+                    SizedBox(
+                      height: 50, // Set the height to 50
+                      child: TextField(
+                        onChanged: (value) {
+                          setState(() {
+                            title = value;
+                          });
+                        }, // Set the maximum number of lines to 1
+                        decoration: const InputDecoration(
+                          labelText: 'Title',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 8,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .secondaryContainer,
+                              foregroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              FocusScope.of(context).unfocus();
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        Expanded(
+                          flex: 5,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                            ),
+                            onPressed: () {
+                              // Save the translation with the title
+                              Navigator.pop(context);
+                              FocusScope.of(context).unfocus();
+                              _saveTTS(title);
+                            },
+                            child: const Text('Save'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _saveTTS(String title) async {
+    final prefs = await SharedPreferences.getInstance();
+    final translations = prefs.getStringList('savedActivity') ?? [];
+    final translation = {
+      'tag': 'translate',
+      'title': title,
+      'text': _textController.text,
+      'date': DateTime.now().toString()
+    };
+    translations.add(jsonEncode(translation));
+    await prefs.setStringList('savedActivity', translations);
+    _showSnackbar("Saved successfully");
+  }
+
+  void _showSnackbar(String text) {
+    final snackBar = SnackBar(
+      duration: const Duration(seconds: 3),
+      backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+      content: Text(
+        text,
+        style: TextStyle(
+            color: Theme.of(context).colorScheme.onSecondaryContainer),
+      ),
+    );
+
+    // Find the ScaffoldMessenger in the widget tree and use it to show a SnackBar.
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  Future<Directory> _getMusicDirectory() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final musicDirectory = Directory('${directory.path}/Music');
+
+    if (!(await musicDirectory.exists())) {
+      await musicDirectory.create(recursive: true);
+    }
+
+    print('Music Directory Path: ${musicDirectory.path}'); // Debug print
+    return musicDirectory;
+  }
+
+  Future<void> _convertTextToSpeech() async {
+    final FlutterTts flutterTts = FlutterTts();
+    final text = _textController.text;
+
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Please enter text to convert.'),
+      ));
+      return;
+    }
+
+    try {
+      // Get the music directory
+      final musicDirectory = await _getMusicDirectory();
+      final musicDirPath = musicDirectory.path; // Extract the path
+
+      Future<String> getNextAvailableFilename({
+        required String baseName, // Base part of the filename
+        required String dirPath, // Path to directory
+      }) async {
+        int count = 1;
+        String filePath;
+        do {
+          filePath = '$dirPath/$baseName$count.mp3';
+          count++;
+        } while (await File(filePath).exists());
+        return filePath; // Return the complete file path
+      }
+
+      // Generate a unique filename
+      final filePath = await getNextAvailableFilename(
+          baseName: 'voxiloud_audio', dirPath: musicDirPath);
+
+      // Configure TTS settings
+      await flutterTts.setVoice({"name": _selectedVoice!});
+      await flutterTts.setSpeechRate(_speechRate);
+      await flutterTts.setVolume(1.0);
+      await flutterTts.setPitch(1.0);
+
+      // Synthesize text to speech and save to file
+      await flutterTts.synthesizeToFile(text, filePath);
+
+      _showSnackbar('Audio saved to $filePath');
+    } catch (error) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error: ${error.toString()}'),
+      ));
+    }
   }
 }
 
