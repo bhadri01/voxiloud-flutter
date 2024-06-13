@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:docx_to_text/docx_to_text.dart';
+import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:read_pdf_text/read_pdf_text.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
 import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
 
 class DocsPage extends StatefulWidget {
@@ -124,6 +126,23 @@ class _DocsPageState extends State<DocsPage> {
                               textData: extractedText,
                             ),
                           ),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.translate_rounded),
+                      title: const Text('Translate'),
+                      onTap: () {
+                        // Handle TTS tap
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) {
+                            return TranslatePage(
+                              queryParameters: {
+                                "text": extractedText,
+                              },
+                            );
+                          }),
                         );
                       },
                     ),
@@ -501,7 +520,96 @@ class _DocsPageState extends State<DocsPage> {
                                         .colorScheme
                                         .secondaryContainer),
                               ),
-                              child: Text(extractedText)),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 6),
+                                    decoration: BoxDecoration(
+                                        border: Border(
+                                            bottom: BorderSide(
+                                                width: 1,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .secondary
+                                                    .withOpacity(0.5)))),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        const Text("Converted Text"),
+                                        Row(
+                                          children: [
+                                            GestureDetector(
+                                                onTap: () {
+                                                  Clipboard.setData(
+                                                      ClipboardData(
+                                                          text: extractedText));
+                                                  _showSnackbar(
+                                                      'Copied to clipboard!');
+                                                },
+                                                child: const Icon(
+                                                    Icons.copy_rounded)),
+                                            const SizedBox(
+                                              width: 6,
+                                            ),
+                                            GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          TtsPage(
+                                                        textData: extractedText,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                child: const Icon(
+                                                    Icons.voice_chat)),
+                                            const SizedBox(
+                                              width: 6,
+                                            ),
+                                            GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) {
+                                                      return TranslatePage(
+                                                        queryParameters: {
+                                                          "text": extractedText
+                                                        },
+                                                      );
+                                                    }),
+                                                  );
+                                                },
+                                                child: const Icon(
+                                                    Icons.translate_rounded)),
+                                            const SizedBox(
+                                              width: 6,
+                                            ),
+                                            GestureDetector(
+                                                onTap: () {
+                                                  _showBottomSheet(context);
+                                                },
+                                                child: const Icon(
+                                                    Icons.more_vert_rounded))
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 6,
+                                  ),
+                                  SizedBox(
+                                      width: double.infinity,
+                                      child: Text(extractedText)),
+                                ],
+                              )),
                         ),
                       ],
                     ),

@@ -7,7 +7,7 @@ class LoadingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Simulate a loading process
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushReplacementNamed(context, '/auth');
+      Navigator.pushReplacementNamed(context, '/dashboard');
     });
 
     return Scaffold(

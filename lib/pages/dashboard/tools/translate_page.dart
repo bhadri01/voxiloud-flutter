@@ -1,14 +1,17 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:language_detector/language_detector.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:translator/translator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class TranslatePage extends StatefulWidget {
   const TranslatePage({super.key, this.queryParameters});
   final Map<String, String>? queryParameters;
+
   @override
   State<TranslatePage> createState() => _TranslatePageState();
 }
@@ -30,6 +33,15 @@ class _TranslatePageState extends State<TranslatePage> {
 
   List<String> _selectedLanguages = [];
   List<Language> filteredLanguages = [];
+
+  Future<void> _checkInternetConnection() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      _showSnackbar("No internet connection");
+    } else {
+      _translate();
+    }
+  }
 
   String _limitInputData(String input) {
     List<String> words = input.split(' ');
@@ -78,7 +90,7 @@ class _TranslatePageState extends State<TranslatePage> {
           });
           _motinorTranslationActivity();
         } catch (e) {
-          _showSnackbar("Error translating text: $e");
+          _showSnackbar("Error translating text: ${e.toString()}");
           setState(() {
             _translatedString = "";
             _isTranslating = false;
@@ -257,6 +269,7 @@ class _TranslatePageState extends State<TranslatePage> {
       _toLanguageName = widget.queryParameters!['translatedName'] ?? "";
       _toLanguageCode = widget.queryParameters!['translatedCode'] ?? "";
     }
+    filteredLanguages = languages;
   }
 
   @override
@@ -273,11 +286,6 @@ class _TranslatePageState extends State<TranslatePage> {
     });
   }
 
-  Future<void> _saveSelectedLanguages(List<String> languages) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('selectedLanguages', languages);
-  }
-
   void _filterLanguages() {
     setState(() {
       final searchText = _searchController.text.toLowerCase();
@@ -288,13 +296,19 @@ class _TranslatePageState extends State<TranslatePage> {
   }
 
   void _clearFilter() {
+    _searchController.clear();
+    FocusScope.of(context).unfocus();
     setState(() {
-      _searchController.clear();
       filteredLanguages = languages;
     });
   }
 
   void _showLanguagePicker(BuildContext context) {
+    setState(() {
+      _previouslySelectedLanguageCode = _toLanguageCode;
+      _previouslySelectedLanguageName = _toLanguageName;
+    });
+
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -302,7 +316,13 @@ class _TranslatePageState extends State<TranslatePage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // Separate selected and unselected languages
+            void updateLanguageSelection(Language language) {
+              setState(() {
+                _toLanguageCode = language.code;
+                _toLanguageName = language.name;
+              });
+            }
+
             List<Language> selectedLanguagesList = languages
                 .where((language) => _selectedLanguages.contains(language.code))
                 .toList();
@@ -311,7 +331,6 @@ class _TranslatePageState extends State<TranslatePage> {
                     (language) => !_selectedLanguages.contains(language.code))
                 .toList();
 
-            // Merge filtered languages if search query is present
             if (_searchController.text.isNotEmpty) {
               selectedLanguagesList = filteredLanguages
                   .where(
@@ -334,6 +353,9 @@ class _TranslatePageState extends State<TranslatePage> {
                       padding: const EdgeInsets.all(8.0),
                       child: TextFormField(
                         controller: _searchController,
+                        onChanged: (value) {
+                          _filterLanguages();
+                        },
                         decoration: InputDecoration(
                           labelText: 'Search Languages',
                           border: const OutlineInputBorder(),
@@ -346,51 +368,51 @@ class _TranslatePageState extends State<TranslatePage> {
                         ),
                       ),
                     ),
-                    if (selectedLanguagesList.isNotEmpty &&
-                        _searchController.text.isEmpty)
-                      const Text(
-                        'Preferred Languages',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    if (selectedLanguagesList.isNotEmpty &&
-                        _searchController.text.isEmpty)
-                      Expanded(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: selectedLanguagesList.length,
-                          itemBuilder: (context, index) {
-                            return CheckboxListTile(
-                              value: _toLanguageCode ==
-                                  selectedLanguagesList[index].code,
-                              title: Text(selectedLanguagesList[index].name),
-                              onChanged: (value) {
-                                setState(() {
-                                  _toLanguageName =
-                                      selectedLanguagesList[index].name;
-                                  _toLanguageCode =
-                                      selectedLanguagesList[index].code;
-                                  _previouslySelectedLanguageCode =
-                                      selectedLanguagesList[index].code;
-                                  _previouslySelectedLanguageName =
-                                      selectedLanguagesList[index].name;
-                                });
-                                _saveSelectedLanguages(_selectedLanguages);
-                                FocusScope.of(context).unfocus();
-                              },
-                              controlAffinity: ListTileControlAffinity.leading,
-                              secondary: _toLanguageCode ==
-                                      selectedLanguagesList[index].code
-                                  ? const Icon(Icons.check)
-                                  : null,
-                            );
-                          },
+                    Visibility(
+                      visible: selectedLanguagesList.isNotEmpty &&
+                          _searchController.text.isEmpty,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.only(left: 8),
+                        child: const Text(
+                          'Preferred Languages',
+                          textAlign: TextAlign.left,
                         ),
                       ),
-                    if (unselectedLanguagesList.isNotEmpty)
-                      const Text(
-                        'Other Languages',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    if (selectedLanguagesList.isNotEmpty &&
+                        _searchController.text.isEmpty)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: selectedLanguagesList.length,
+                        itemBuilder: (context, index) {
+                          return CheckboxListTile(
+                            value: _toLanguageCode ==
+                                selectedLanguagesList[index].code,
+                            title: Text(selectedLanguagesList[index].name),
+                            onChanged: (value) {
+                              updateLanguageSelection(
+                                  selectedLanguagesList[index]);
+                            },
+                            controlAffinity: ListTileControlAffinity.leading,
+                            secondary: _toLanguageCode ==
+                                    selectedLanguagesList[index].code
+                                ? const Icon(Icons.check)
+                                : null,
+                          );
+                        },
                       ),
+                    Visibility(
+                      visible: unselectedLanguagesList.isNotEmpty,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.only(left: 8),
+                        child: const Text(
+                          'Other Languages',
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
+                    ),
                     Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,
@@ -401,18 +423,8 @@ class _TranslatePageState extends State<TranslatePage> {
                                 unselectedLanguagesList[index].code,
                             title: Text(unselectedLanguagesList[index].name),
                             onChanged: (value) {
-                              setState(() {
-                                _toLanguageName =
-                                    unselectedLanguagesList[index].name;
-                                _toLanguageCode =
-                                    unselectedLanguagesList[index].code;
-                                _previouslySelectedLanguageCode =
-                                    unselectedLanguagesList[index].code;
-                                _previouslySelectedLanguageName =
-                                    unselectedLanguagesList[index].name;
-                              });
-                              _saveSelectedLanguages(_selectedLanguages);
-                              FocusScope.of(context).unfocus();
+                              updateLanguageSelection(
+                                  unselectedLanguagesList[index]);
                             },
                             controlAffinity: ListTileControlAffinity.leading,
                             secondary: _toLanguageCode ==
@@ -445,7 +457,6 @@ class _TranslatePageState extends State<TranslatePage> {
                                 _toLanguageName =
                                     _previouslySelectedLanguageName;
                               });
-                              FocusScope.of(context).unfocus();
                             },
                             child: const Text('Cancel'),
                           ),
@@ -464,9 +475,7 @@ class _TranslatePageState extends State<TranslatePage> {
                             ),
                             onPressed: () {
                               Navigator.pop(context);
-                              _saveSelectedLanguages(
-                                  _selectedLanguages..add(_toLanguageCode));
-                              FocusScope.of(context).unfocus();
+                              this.setState(() {});
                             },
                             child: const Text('Select'),
                           ),
@@ -721,15 +730,6 @@ class _TranslatePageState extends State<TranslatePage> {
         backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
         appBar: AppBar(
           title: const Text('Translate'),
-          actions: [
-            Visibility(
-              visible: _translatedString.isNotEmpty,
-              child: IconButton(
-                icon: const Icon(Icons.more_vert_rounded),
-                onPressed: () => _showBottomSheet(context),
-              ),
-            ),
-          ],
         ),
         body: Scrollbar(
           child: SingleChildScrollView(
@@ -807,7 +807,8 @@ class _TranslatePageState extends State<TranslatePage> {
                                   Theme.of(context).colorScheme.primary,
                               foregroundColor:
                                   Theme.of(context).colorScheme.onPrimary),
-                          onPressed: _isTranslating ? null : _translate,
+                          onPressed:
+                              _isTranslating ? null : _checkInternetConnection,
                           child: _isTranslating
                               ? const SizedBox(
                                   width: double.infinity,
@@ -858,6 +859,70 @@ class _TranslatePageState extends State<TranslatePage> {
                             padding: const EdgeInsets.all(8.0),
                             child: Column(
                               children: [
+                                Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  decoration: BoxDecoration(
+                                      border: Border(
+                                          bottom: BorderSide(
+                                              width: 1,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .secondary
+                                                  .withOpacity(0.5)))),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      const Text("Translated"),
+                                      Row(
+                                        children: [
+                                          GestureDetector(
+                                              onTap: () {
+                                                Clipboard.setData(ClipboardData(
+                                                    text: _translatedString));
+                                                _showSnackbar(
+                                                    'Copied to clipboard!');
+                                              },
+                                              child: const Icon(
+                                                  Icons.copy_rounded)),
+                                          const SizedBox(
+                                            width: 6,
+                                          ),
+                                          GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        TtsPage(
+                                                      textData:
+                                                          _translatedString,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child:
+                                                  const Icon(Icons.voice_chat)),
+                                          const SizedBox(
+                                            width: 6,
+                                          ),
+                                          GestureDetector(
+                                              onTap: () {
+                                                _showBottomSheet(context);
+                                              },
+                                              child: const Icon(
+                                                  Icons.more_vert_rounded))
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 6,
+                                ),
                                 SizedBox(
                                   width: double.infinity,
                                   child: Text(

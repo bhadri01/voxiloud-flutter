@@ -93,9 +93,7 @@ class _SavedPageState extends State<SavedPage> {
 
     if (!(await musicDirectory.exists())) {
       await musicDirectory.create(recursive: true);
-    }
-
-    print('Music Directory Path: ${musicDirectory.path}'); // Debug print
+    } // Debug print
     return musicDirectory;
   }
 
@@ -247,71 +245,341 @@ class _SavedPageState extends State<SavedPage> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Row(
-                                            children: [
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          100),
-                                                  border: Border.all(
+                                          Container(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 6),
+                                            decoration: BoxDecoration(
+                                              border: Border(
+                                                  bottom: BorderSide(
                                                       width: 1,
                                                       color: Theme.of(context)
                                                           .colorScheme
                                                           .secondary
-                                                          .withOpacity(0.5)),
-                                                ),
-                                                child: Row(
+                                                          .withOpacity(0.5))),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Row(
                                                   children: [
                                                     Container(
-                                                      height: 8,
-                                                      width: 8,
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 2),
                                                       decoration: BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(10),
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .primary),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(100),
+                                                        border: Border.all(
+                                                            width: 1,
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .colorScheme
+                                                                .secondary
+                                                                .withOpacity(
+                                                                    0.5)),
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          Container(
+                                                            height: 8,
+                                                            width: 8,
+                                                            decoration: BoxDecoration(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            10),
+                                                                color: Theme.of(
+                                                                        context)
+                                                                    .colorScheme
+                                                                    .primary),
+                                                          ),
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 4),
+                                                            child: Text(
+                                                              translation.tag,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  const TextStyle(
+                                                                      fontSize:
+                                                                          12),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
                                                     ),
                                                     Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 4),
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 6),
                                                       child: Text(
-                                                        translation.tag,
+                                                        translation.title[0]
+                                                                .toUpperCase() +
+                                                            translation.title
+                                                                .substring(1),
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                         style: const TextStyle(
-                                                            fontSize: 12),
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w500),
                                                       ),
                                                     ),
                                                   ],
                                                 ),
-                                              ),
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 6),
-                                                child: Text(
-                                                  translation.title[0]
-                                                          .toUpperCase() +
-                                                      translation.title
-                                                          .substring(1),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.w500),
+                                                Row(
+                                                  children: [
+                                                    GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder:
+                                                                    (context) {
+                                                              if (translation
+                                                                      .tag ==
+                                                                  "translate") {
+                                                                return TtsPage(
+                                                                  textData: translation
+                                                                          .translatedText
+                                                                      as String,
+                                                                );
+                                                              } else {
+                                                                return TtsPage(
+                                                                  textData:
+                                                                      translation
+                                                                          .text,
+                                                                );
+                                                              }
+                                                            }),
+                                                          );
+                                                        },
+                                                        child: const Icon(
+                                                            Icons.voice_chat)),
+                                                    const SizedBox(
+                                                      width: 10,
+                                                    ),
+                                                    GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder:
+                                                                    (context) {
+                                                              if (translation
+                                                                      .tag ==
+                                                                  "translate") {
+                                                                return TranslatePage(
+                                                                  queryParameters: {
+                                                                    "text":
+                                                                        translation
+                                                                            .text,
+                                                                    "translatedName":
+                                                                        translation.translatedName
+                                                                            as String,
+                                                                    "translatedCode":
+                                                                        translation.translatedCode
+                                                                            as String
+                                                                  },
+                                                                );
+                                                              } else {
+                                                                return TranslatePage(
+                                                                  queryParameters: {
+                                                                    "text":
+                                                                        translation
+                                                                            .text,
+                                                                  },
+                                                                );
+                                                              }
+                                                            }),
+                                                          );
+                                                        },
+                                                        child: const Icon(Icons
+                                                            .translate_rounded)),
+                                                    const SizedBox(
+                                                      width: 8,
+                                                    ),
+                                                    GestureDetector(
+                                                        onTap: () {
+                                                          showModalBottomSheet(
+                                                            context: context,
+                                                            isDismissible:
+                                                                false,
+                                                            builder: (context) {
+                                                              return Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top:
+                                                                            16),
+                                                                child: Column(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  children: [
+                                                                    ListTile(
+                                                                      leading:
+                                                                          const Icon(
+                                                                              Icons.voice_chat),
+                                                                      title: const Text(
+                                                                          'TTS'),
+                                                                      onTap:
+                                                                          () {
+                                                                        // Handle TTS tap
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(builder:
+                                                                              (context) {
+                                                                            if (translation.tag ==
+                                                                                "translate") {
+                                                                              return TtsPage(
+                                                                                textData: translation.translatedText as String,
+                                                                              );
+                                                                            } else {
+                                                                              return TtsPage(
+                                                                                textData: translation.text,
+                                                                              );
+                                                                            }
+                                                                          }),
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                    ListTile(
+                                                                      leading:
+                                                                          const Icon(
+                                                                              Icons.translate_rounded),
+                                                                      title: const Text(
+                                                                          'Translate'),
+                                                                      onTap:
+                                                                          () {
+                                                                        // Handle translate tap
+                                                                        Navigator
+                                                                            .push(
+                                                                          context,
+                                                                          MaterialPageRoute(builder:
+                                                                              (context) {
+                                                                            if (translation.tag ==
+                                                                                "translate") {
+                                                                              return TranslatePage(
+                                                                                queryParameters: {
+                                                                                  "text": translation.text,
+                                                                                  "translatedName": translation.translatedName as String,
+                                                                                  "translatedCode": translation.translatedCode as String
+                                                                                },
+                                                                              );
+                                                                            } else {
+                                                                              return TranslatePage(
+                                                                                queryParameters: {
+                                                                                  "text": translation.text,
+                                                                                },
+                                                                              );
+                                                                            }
+                                                                          }),
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                    ListTile(
+                                                                      leading:
+                                                                          const Icon(
+                                                                              Icons.share_rounded),
+                                                                      title: const Text(
+                                                                          'Share'),
+                                                                      onTap:
+                                                                          () async {
+                                                                        // Handle share tap
+                                                                        if (translation.tag ==
+                                                                            "translate") {
+                                                                          await Share.share(translation.translatedText
+                                                                              as String);
+                                                                        } else {
+                                                                          await Share.share(
+                                                                              translation.text);
+                                                                        }
+                                                                        // ignore: use_build_context_synchronously
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                    ),
+                                                                    ListTile(
+                                                                      leading:
+                                                                          Icon(
+                                                                        Icons
+                                                                            .delete_rounded,
+                                                                        color: Theme.of(context)
+                                                                            .colorScheme
+                                                                            .error,
+                                                                      ),
+                                                                      title:
+                                                                          Text(
+                                                                        "Delete",
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Theme.of(context).colorScheme.error),
+                                                                      ),
+                                                                      onTap:
+                                                                          () {
+                                                                        final prefs =
+                                                                            SharedPreferences.getInstance();
+                                                                        prefs.then(
+                                                                            (value) {
+                                                                          final list =
+                                                                              value.getStringList('savedActivity');
+                                                                          if (list !=
+                                                                              null) {
+                                                                            list.removeAt((list.length - 1) -
+                                                                                index);
+                                                                            value.setStringList('savedActivity',
+                                                                                list);
+                                                                            setState(() {
+                                                                              _futureSavedTranslations = _getSavedTranslations();
+                                                                            });
+                                                                            Navigator.pop(context);
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                    ListTile(
+                                                                      leading: Icon(
+                                                                          Icons
+                                                                              .close_rounded,
+                                                                          color: Theme.of(context)
+                                                                              .colorScheme
+                                                                              .tertiary),
+                                                                      title:
+                                                                          Text(
+                                                                        'Close',
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Theme.of(context).colorScheme.tertiary),
+                                                                      ),
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            },
+                                                          );
+                                                        },
+                                                        child: const Icon(
+                                                            Icons.more_vert))
+                                                  ],
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                           const SizedBox(
                                             height: 6,
@@ -333,166 +601,6 @@ class _SavedPageState extends State<SavedPage> {
                                       ),
                                     ),
                                   ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.more_vert),
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isDismissible: false,
-                                      builder: (context) {
-                                        return Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 16),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              ListTile(
-                                                leading: const Icon(
-                                                    Icons.voice_chat),
-                                                title: const Text('TTS'),
-                                                onTap: () {
-                                                  // Handle TTS tap
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) {
-                                                      if (translation.tag ==
-                                                          "translate") {
-                                                        return TtsPage(
-                                                          textData: translation
-                                                                  .translatedText
-                                                              as String,
-                                                        );
-                                                      } else {
-                                                        return TtsPage(
-                                                          textData:
-                                                              translation.text,
-                                                        );
-                                                      }
-                                                    }),
-                                                  );
-                                                },
-                                              ),
-                                              ListTile(
-                                                leading: const Icon(
-                                                    Icons.translate_rounded),
-                                                title: const Text('Translate'),
-                                                onTap: () {
-                                                  // Handle translate tap
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) {
-                                                      if (translation.tag ==
-                                                          "translate") {
-                                                        return TranslatePage(
-                                                          queryParameters: {
-                                                            "text": translation
-                                                                .text,
-                                                            "translatedName":
-                                                                translation
-                                                                        .translatedName
-                                                                    as String,
-                                                            "translatedCode":
-                                                                translation
-                                                                        .translatedCode
-                                                                    as String
-                                                          },
-                                                        );
-                                                      } else {
-                                                        return TranslatePage(
-                                                          queryParameters: {
-                                                            "text": translation
-                                                                .text,
-                                                          },
-                                                        );
-                                                      }
-                                                    }),
-                                                  );
-                                                },
-                                              ),
-                                              ListTile(
-                                                leading: const Icon(
-                                                    Icons.share_rounded),
-                                                title: const Text('Share'),
-                                                onTap: () async {
-                                                  // Handle share tap
-                                                  if (translation.tag ==
-                                                      "translate") {
-                                                    await Share.share(
-                                                        translation
-                                                                .translatedText
-                                                            as String);
-                                                  } else {
-                                                    await Share.share(
-                                                        translation.text);
-                                                  }
-                                                  // ignore: use_build_context_synchronously
-                                                  Navigator.pop(context);
-                                                },
-                                              ),
-                                              ListTile(
-                                                leading: Icon(
-                                                  Icons.delete_rounded,
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .error,
-                                                ),
-                                                title: Text(
-                                                  "Delete",
-                                                  style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .error),
-                                                ),
-                                                onTap: () {
-                                                  final prefs =
-                                                      SharedPreferences
-                                                          .getInstance();
-                                                  prefs.then((value) {
-                                                    final list =
-                                                        value.getStringList(
-                                                            'savedActivity');
-                                                    if (list != null) {
-                                                      list.removeAt(
-                                                          (list.length - 1) -
-                                                              index);
-                                                      value.setStringList(
-                                                          'savedActivity',
-                                                          list);
-                                                      setState(() {
-                                                        _futureSavedTranslations =
-                                                            _getSavedTranslations();
-                                                      });
-                                                      Navigator.pop(context);
-                                                    }
-                                                  });
-                                                },
-                                              ),
-                                              ListTile(
-                                                leading: Icon(
-                                                    Icons.close_rounded,
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .tertiary),
-                                                title: Text(
-                                                  'Close',
-                                                  style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .tertiary),
-                                                ),
-                                                onTap: () {
-                                                  Navigator.pop(context);
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
                                 ),
                               ],
                             ),
