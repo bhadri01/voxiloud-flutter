@@ -1,4 +1,3 @@
-// lib/pages/dashboard/tools/docs_page.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:language_detector/language_detector.dart';
@@ -17,6 +16,7 @@ class TranslatePage extends StatefulWidget {
 class _TranslatePageState extends State<TranslatePage> {
   final TextEditingController _textController = TextEditingController();
   final GoogleTranslator _translator = GoogleTranslator();
+  final TextEditingController _searchController = TextEditingController();
 
   String _inputData = "";
   String _fromLanguageCode = "";
@@ -27,6 +27,9 @@ class _TranslatePageState extends State<TranslatePage> {
   String _previouslySelectedLanguageName = "";
   String _translatedString = "";
   bool _isTranslating = false;
+
+  List<String> _selectedLanguages = [];
+  List<Language> filteredLanguages = [];
 
   String _limitInputData(String input) {
     List<String> words = input.split(' ');
@@ -73,7 +76,6 @@ class _TranslatePageState extends State<TranslatePage> {
             _translatedString = translation.text;
             _isTranslating = false;
           });
-          // for every action this will add has a recent activity
           _motinorTranslationActivity();
         } catch (e) {
           _showSnackbar("Error translating text: $e");
@@ -105,7 +107,6 @@ class _TranslatePageState extends State<TranslatePage> {
       ),
     );
 
-    // Find the ScaffoldMessenger in the widget tree and use it to show a SnackBar.
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
@@ -246,12 +247,11 @@ class _TranslatePageState extends State<TranslatePage> {
     Language('Zulu', 'zu'),
   ];
 
-  List<Language> filteredLanguages = [];
-
   @override
   void initState() {
     super.initState();
-    filteredLanguages = languages;
+    _loadSelectedLanguages();
+    _searchController.addListener(_filterLanguages);
     if (widget.queryParameters != null) {
       _onTextChanged(widget.queryParameters!['text'] ?? "");
       _toLanguageName = widget.queryParameters!['translatedName'] ?? "";
@@ -259,13 +259,38 @@ class _TranslatePageState extends State<TranslatePage> {
     }
   }
 
-  void _filterLanguages(String query) {
+  @override
+  void dispose() {
+    _searchController.removeListener(_filterLanguages);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSelectedLanguages() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
+      _selectedLanguages = prefs.getStringList('selectedLanguages') ?? [];
+    });
+  }
+
+  Future<void> _saveSelectedLanguages(List<String> languages) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('selectedLanguages', languages);
+  }
+
+  void _filterLanguages() {
+    setState(() {
+      final searchText = _searchController.text.toLowerCase();
       filteredLanguages = languages
-          .where((language) =>
-              language.name.toLowerCase().contains(query.toLowerCase()) ||
-              language.code.toLowerCase().contains(query.toLowerCase()))
+          .where((lang) => lang.name.toLowerCase().contains(searchText))
           .toList();
+    });
+  }
+
+  void _clearFilter() {
+    setState(() {
+      _searchController.clear();
+      filteredLanguages = languages;
     });
   }
 
@@ -277,6 +302,27 @@ class _TranslatePageState extends State<TranslatePage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            // Separate selected and unselected languages
+            List<Language> selectedLanguagesList = languages
+                .where((language) => _selectedLanguages.contains(language.code))
+                .toList();
+            List<Language> unselectedLanguagesList = languages
+                .where(
+                    (language) => !_selectedLanguages.contains(language.code))
+                .toList();
+
+            // Merge filtered languages if search query is present
+            if (_searchController.text.isNotEmpty) {
+              selectedLanguagesList = filteredLanguages
+                  .where(
+                      (language) => _selectedLanguages.contains(language.code))
+                  .toList();
+              unselectedLanguagesList = filteredLanguages
+                  .where(
+                      (language) => !_selectedLanguages.contains(language.code))
+                  .toList();
+            }
+
             return Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
@@ -287,37 +333,92 @@ class _TranslatePageState extends State<TranslatePage> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextFormField(
-                        onChanged: (value) {
-                          setState(() {
-                            _filterLanguages(value);
-                          });
-                        },
-                        decoration: const InputDecoration(
-                          labelText: 'Search',
-                          border: OutlineInputBorder(),
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          labelText: 'Search Languages',
+                          border: const OutlineInputBorder(),
+                          suffixIcon: _searchController.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: _clearFilter,
+                                ),
                         ),
                       ),
                     ),
+                    if (selectedLanguagesList.isNotEmpty &&
+                        _searchController.text.isEmpty)
+                      const Text(
+                        'Preferred Languages',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    if (selectedLanguagesList.isNotEmpty &&
+                        _searchController.text.isEmpty)
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: selectedLanguagesList.length,
+                          itemBuilder: (context, index) {
+                            return CheckboxListTile(
+                              value: _toLanguageCode ==
+                                  selectedLanguagesList[index].code,
+                              title: Text(selectedLanguagesList[index].name),
+                              onChanged: (value) {
+                                setState(() {
+                                  _toLanguageName =
+                                      selectedLanguagesList[index].name;
+                                  _toLanguageCode =
+                                      selectedLanguagesList[index].code;
+                                  _previouslySelectedLanguageCode =
+                                      selectedLanguagesList[index].code;
+                                  _previouslySelectedLanguageName =
+                                      selectedLanguagesList[index].name;
+                                });
+                                _saveSelectedLanguages(_selectedLanguages);
+                                FocusScope.of(context).unfocus();
+                              },
+                              controlAffinity: ListTileControlAffinity.leading,
+                              secondary: _toLanguageCode ==
+                                      selectedLanguagesList[index].code
+                                  ? const Icon(Icons.check)
+                                  : null,
+                            );
+                          },
+                        ),
+                      ),
+                    if (unselectedLanguagesList.isNotEmpty)
+                      const Text(
+                        'Other Languages',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,
-                        itemCount: filteredLanguages.length,
+                        itemCount: unselectedLanguagesList.length,
                         itemBuilder: (context, index) {
                           return CheckboxListTile(
                             value: _toLanguageCode ==
-                                filteredLanguages[index].code,
-                            title: Text(filteredLanguages[index].name),
+                                unselectedLanguagesList[index].code,
+                            title: Text(unselectedLanguagesList[index].name),
                             onChanged: (value) {
-                              _toLanguageName = filteredLanguages[index].name;
-                              _toLanguageCode = filteredLanguages[index].code;
-                              // Unfocus the input field
+                              setState(() {
+                                _toLanguageName =
+                                    unselectedLanguagesList[index].name;
+                                _toLanguageCode =
+                                    unselectedLanguagesList[index].code;
+                                _previouslySelectedLanguageCode =
+                                    unselectedLanguagesList[index].code;
+                                _previouslySelectedLanguageName =
+                                    unselectedLanguagesList[index].name;
+                              });
+                              _saveSelectedLanguages(_selectedLanguages);
                               FocusScope.of(context).unfocus();
                             },
                             controlAffinity: ListTileControlAffinity.leading,
-                            secondary:
-                                _toLanguageCode == filteredLanguages[index].code
-                                    ? const Icon(Icons.check)
-                                    : null,
+                            secondary: _toLanguageCode ==
+                                    unselectedLanguagesList[index].code
+                                ? const Icon(Icons.check)
+                                : null,
                           );
                         },
                       ),
@@ -338,8 +439,12 @@ class _TranslatePageState extends State<TranslatePage> {
                             ),
                             onPressed: () {
                               Navigator.pop(context);
-                              _toLanguageCode = _previouslySelectedLanguageCode;
-                              _toLanguageName = _previouslySelectedLanguageName;
+                              setState(() {
+                                _toLanguageCode =
+                                    _previouslySelectedLanguageCode;
+                                _toLanguageName =
+                                    _previouslySelectedLanguageName;
+                              });
                               FocusScope.of(context).unfocus();
                             },
                             child: const Text('Cancel'),
@@ -359,8 +464,8 @@ class _TranslatePageState extends State<TranslatePage> {
                             ),
                             onPressed: () {
                               Navigator.pop(context);
-                              _previouslySelectedLanguageCode = _toLanguageCode;
-                              _previouslySelectedLanguageName = _toLanguageName;
+                              _saveSelectedLanguages(
+                                  _selectedLanguages..add(_toLanguageCode));
                               FocusScope.of(context).unfocus();
                             },
                             child: const Text('Select'),
@@ -396,7 +501,6 @@ class _TranslatePageState extends State<TranslatePage> {
                       leading: const Icon(Icons.voice_chat),
                       title: const Text('TTS'),
                       onTap: () {
-                        // Handle TTS tap
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -411,11 +515,9 @@ class _TranslatePageState extends State<TranslatePage> {
                       leading: const Icon(Icons.share_rounded),
                       title: const Text('Share'),
                       onTap: () async {
-                        // Share the input text data
                         if (_translatedString.isNotEmpty) {
                           await Share.share(_translatedString);
                         }
-
                         // ignore: use_build_context_synchronously
                         FocusScope.of(context).unfocus();
                       },
@@ -424,7 +526,6 @@ class _TranslatePageState extends State<TranslatePage> {
                       leading: const Icon(Icons.save_rounded),
                       title: const Text('Save'),
                       onTap: () {
-                        // Navigate to the TTS route with the input text data
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
                         _showSaveBottomSheet(context, _translatedString);
@@ -441,7 +542,6 @@ class _TranslatePageState extends State<TranslatePage> {
                             color: Theme.of(context).colorScheme.error),
                       ),
                       onTap: () {
-                        // Clear the input text data
                         setState(() {
                           _inputData = "";
                           _fromLanguageCode = "";
@@ -469,7 +569,6 @@ class _TranslatePageState extends State<TranslatePage> {
                         ),
                       ),
                       onTap: () {
-                        // Navigate to the TTS route with the input text data
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
                       },
@@ -509,13 +608,13 @@ class _TranslatePageState extends State<TranslatePage> {
                           width: double.infinity, child: Text("Save as")),
                     ),
                     SizedBox(
-                      height: 50, // Set the height to 50
+                      height: 50,
                       child: TextField(
                         onChanged: (value) {
                           setState(() {
                             title = value;
                           });
-                        }, // Set the maximum number of lines to 1
+                        },
                         decoration: const InputDecoration(
                           labelText: 'Title',
                           border: OutlineInputBorder(),
@@ -559,7 +658,6 @@ class _TranslatePageState extends State<TranslatePage> {
                                   Theme.of(context).colorScheme.onPrimary,
                             ),
                             onPressed: () {
-                              // Save the translation with the title
                               Navigator.pop(context);
                               FocusScope.of(context).unfocus();
                               _saveTranslation(title);
@@ -660,8 +758,7 @@ class _TranslatePageState extends State<TranslatePage> {
                                   onPressed: () {},
                                   child: Text(
                                       _fromLanguageCode.isNotEmpty
-                                          // ignore: unnecessary_string_interpolations
-                                          ? "$_fromLanguageName"
+                                          ? _fromLanguageName
                                           : "Auto Detect",
                                       style: const TextStyle(fontSize: 12)))),
                           IconButton(
