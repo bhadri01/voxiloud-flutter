@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
@@ -33,82 +31,13 @@ class _TtsPageState extends State<TtsPage> {
   List<Map<String, String>> filteredVoices = [];
   double _speechRate = 0.5;
 
-  Future<void> requestPermissions(BuildContext context) async {
-    var status = await Permission.storage.status;
-
-    if (status.isGranted) {
-      // Permission is already granted
-      print("Storage permission already granted.");
-    } else if (status.isDenied) {
-      // Permission is denied but not permanently
-      if (await Permission.storage.request().isGranted) {
-        print("Storage permission granted after request.");
-      } else {
-        _showPermissionDeniedDialog(context);
-      }
-    } else if (status.isPermanentlyDenied) {
-      // Permission is permanently denied
-      _showPermissionPermanentlyDeniedDialog(context);
-    }
-  }
-
-  void _showPermissionDeniedDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Permission Denied'),
-          content: Text(
-              'Storage permission is needed to save and retrieve audio files. Please grant the permission.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showPermissionPermanentlyDeniedDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Permission Permanently Denied'),
-          content: Text(
-              'Storage permission has been permanently denied. Please enable it from the app settings.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                openAppSettings();
-                Navigator.of(context).pop();
-              },
-              child: Text('Open Settings'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   void initState() {
     super.initState();
-    requestPermissions(context);
     flutterTts = FlutterTts();
     _textController = TextEditingController(text: widget.textData);
     textProcess();
-
+    _loadColors();
     _getVoices();
 
     flutterTts.setStartHandler(() {
@@ -170,10 +99,14 @@ class _TtsPageState extends State<TtsPage> {
     _textPara = input.split(regExp);
   }
 
+  bool _activityStatus = false;
   Future _speak() async {
     await flutterTts.setVoice({"name": _selectedVoice!});
     await flutterTts.setSpeechRate(_speechRate);
-
+    if (!_activityStatus) {
+      _recentTTS();
+    }
+    _activityStatus = true;
     if (ttsState == TtsState.paused) {
       var textToSpeak = _textPara[_paraIndex].substring(_startOffset);
       var result = await flutterTts.speak(textToSpeak);
@@ -342,7 +275,7 @@ class _TtsPageState extends State<TtsPage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
+                    padding: const EdgeInsets.only(left: 16),
                     child: GestureDetector(
                       onTap: () => _showVoiceSelectionSheet(context),
                       child: const Column(
@@ -407,7 +340,7 @@ class _TtsPageState extends State<TtsPage> {
                     ],
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
+                    padding: const EdgeInsets.only(right: 16),
                     child: GestureDetector(
                       onTap: _showSpeedSelectionSheet,
                       child: Column(
@@ -436,6 +369,25 @@ class _TtsPageState extends State<TtsPage> {
     );
   }
 
+  Color _primaryBgColor = Colors.yellow;
+  Color _secondaryBgColor = Colors.yellow.shade100;
+  Color _primaryFgColor = Colors.black;
+  Color _secondaryFgColor = Colors.black;
+
+  Future<void> _loadColors() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _primaryBgColor =
+          Color(prefs.getInt('primaryBgColor') ?? Colors.yellow.value);
+      _secondaryBgColor = Color(
+          prefs.getInt('secondaryBgColor') ?? Colors.yellow.shade100.value);
+      _primaryFgColor =
+          Color(prefs.getInt('primaryFgColor') ?? Colors.black.value);
+      _secondaryFgColor =
+          Color(prefs.getInt('secondaryFgColor') ?? Colors.black.value);
+    });
+  }
+
   List<TextSpan> _highlightText() {
     List<TextSpan> spans = [];
 
@@ -454,24 +406,24 @@ class _TtsPageState extends State<TtsPage> {
         spans.add(TextSpan(
           text: startWord,
           style: TextStyle(
-            backgroundColor: Colors.yellow[100],
-            color: Theme.of(context).colorScheme.onPrimary,
+            backgroundColor: _secondaryBgColor,
+            color: _secondaryFgColor,
           ),
         ));
 
         spans.add(TextSpan(
           text: currentWord,
           style: TextStyle(
-              backgroundColor: Colors.yellow,
-              color: Theme.of(context).colorScheme.scrim,
+              backgroundColor: _primaryBgColor,
+              color: _primaryFgColor,
               fontWeight: FontWeight.w500),
         ));
 
         spans.add(TextSpan(
           text: endWord,
           style: TextStyle(
-            backgroundColor: Colors.yellow[100],
-            color: Theme.of(context).colorScheme.onPrimary,
+            backgroundColor: _secondaryBgColor,
+            color: _secondaryFgColor,
           ),
         ));
       } else {
@@ -845,7 +797,7 @@ class _TtsPageState extends State<TtsPage> {
     final prefs = await SharedPreferences.getInstance();
     final translations = prefs.getStringList('savedActivity') ?? [];
     final translation = {
-      'tag': 'translate',
+      'tag': 'tts',
       'title': title,
       'text': _textController.text,
       'date': DateTime.now().toString()
@@ -853,6 +805,19 @@ class _TtsPageState extends State<TtsPage> {
     translations.add(jsonEncode(translation));
     await prefs.setStringList('savedActivity', translations);
     _showSnackbar("Saved successfully");
+  }
+
+  Future<void> _recentTTS() async {
+    final prefs = await SharedPreferences.getInstance();
+    final translations = prefs.getStringList('recentActivity') ?? [];
+    final translation = {
+      'tag': 'tts',
+      'text': _textController.text,
+      'date': DateTime.now().toString()
+    };
+    translations.add(jsonEncode(translation));
+    await prefs.setStringList('recentActivity', translations);
+    _showSnackbar("Activity added");
   }
 
   void _showSnackbar(String text) {
@@ -877,8 +842,6 @@ class _TtsPageState extends State<TtsPage> {
     if (!(await musicDirectory.exists())) {
       await musicDirectory.create(recursive: true);
     }
-
-    print('Music Directory Path: ${musicDirectory.path}'); // Debug print
     return musicDirectory;
   }
 
