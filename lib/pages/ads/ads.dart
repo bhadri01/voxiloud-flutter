@@ -16,7 +16,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   void initState() {
     super.initState();
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test Ad Unit ID
+      adUnitId: 'ca-app-pub-6350404067106711/3337365690', // Test Ad Unit ID
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -60,7 +60,7 @@ class InterstitialAdManager {
 
   void loadAd() {
     InterstitialAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/1033173712', // Test Ad Unit ID
+      adUnitId: 'ca-app-pub-6350404067106711/6306944276', // Test Ad Unit ID
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {

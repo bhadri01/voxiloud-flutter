@@ -1,13 +1,44 @@
-gradle-wrapper.jar
-/.gradle
-/captures/
-/gradlew
-/gradlew.bat
-/local.properties
-GeneratedPluginRegistrant.java
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-plugins-dependencies
+.flutter-plugins
+.pub-cache/
+.pub/
+build/
+.idea/
+.vscode/
 
-# Remember to never publicly share your keystore.
-# See https://flutter.dev/docs/deployment/android#reference-the-keystore-from-the-app
+# Android related
+/android/key.properties
+.gradle/
+/android/local.properties
+
+# iOS related
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+/ios/ServiceDefinitions.json
+/ios/Runner/GeneratedPluginRegistrant.*
+
+# VS Code related
+.vscode/
+
+# macOS related
+.DS_Store
+
+# Miscellaneous
+# Files that might appear in the root of the project
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-plugins
+.pub-cache/
+.pub/
+.dart_tool/
+.package_config.json
+.package-lock.json
+
+# Exclude the key properties file
 key.properties
-**/*.keystore
-**/*.jks
