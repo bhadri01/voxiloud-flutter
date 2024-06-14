@@ -35,8 +35,32 @@ class _TranslatePageState extends State<TranslatePage> {
   List<String> _selectedLanguages = [];
   List<Language> filteredLanguages = [];
 
+  final InterstitialAdManager _interstitialAdManager = InterstitialAdManager();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedLanguages();
+    _searchController.addListener(_filterLanguages);
+    if (widget.queryParameters != null) {
+      _onTextChanged(widget.queryParameters!['text'] ?? "");
+      _toLanguageName = widget.queryParameters!['translatedName'] ?? "";
+      _toLanguageCode = widget.queryParameters!['translatedCode'] ?? "";
+    }
+    filteredLanguages = languages;
+    _interstitialAdManager.loadAd();
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_filterLanguages);
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _checkInternetConnection() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
+    // ignore: unrelated_type_equality_checks
     if (connectivityResult == ConnectivityResult.none) {
       _showSnackbar("No internet connection");
     } else {
@@ -259,26 +283,6 @@ class _TranslatePageState extends State<TranslatePage> {
     Language('Yoruba', 'yo'),
     Language('Zulu', 'zu'),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSelectedLanguages();
-    _searchController.addListener(_filterLanguages);
-    if (widget.queryParameters != null) {
-      _onTextChanged(widget.queryParameters!['text'] ?? "");
-      _toLanguageName = widget.queryParameters!['translatedName'] ?? "";
-      _toLanguageCode = widget.queryParameters!['translatedCode'] ?? "";
-    }
-    filteredLanguages = languages;
-  }
-
-  @override
-  void dispose() {
-    _searchController.removeListener(_filterLanguages);
-    _searchController.dispose();
-    super.dispose();
-  }
 
   Future<void> _loadSelectedLanguages() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -524,10 +528,12 @@ class _TranslatePageState extends State<TranslatePage> {
                     ListTile(
                       leading: const Icon(Icons.share_rounded),
                       title: const Text('Share'),
-                      onTap: () async {
-                        if (_translatedString.isNotEmpty) {
-                          await Share.share(_translatedString);
-                        }
+                      onTap: () {
+                        _interstitialAdManager.showAd(() async {
+                          if (_translatedString.isNotEmpty) {
+                            await Share.share(_translatedString);
+                          }
+                        });
                         // ignore: use_build_context_synchronously
                         FocusScope.of(context).unfocus();
                       },
@@ -538,7 +544,9 @@ class _TranslatePageState extends State<TranslatePage> {
                       onTap: () {
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
-                        _showSaveBottomSheet(context, _translatedString);
+                        _interstitialAdManager.showAd(() {
+                          _showSaveBottomSheet(context, _translatedString);
+                        });
                       },
                     ),
                     ListTile(

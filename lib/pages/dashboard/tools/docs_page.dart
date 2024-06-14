@@ -25,6 +25,13 @@ class _DocsPageState extends State<DocsPage> {
   String selectedFileName = '';
   bool isFileSelected = false;
   bool _isConvarting = false;
+  final InterstitialAdManager _interstitialAdManager = InterstitialAdManager();
+
+  @override
+  void initState() {
+    super.initState();
+    _interstitialAdManager.loadAd();
+  }
 
   Future<void> pickFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -150,11 +157,13 @@ class _DocsPageState extends State<DocsPage> {
                     ListTile(
                       leading: const Icon(Icons.share_rounded),
                       title: const Text('Share'),
-                      onTap: () async {
+                      onTap: () {
                         // Share the input text data
-                        if (extractedText.isNotEmpty) {
-                          await Share.share(extractedText);
-                        }
+                        _interstitialAdManager.showAd(() async {
+                          if (extractedText.isNotEmpty) {
+                            await Share.share(extractedText);
+                          }
+                        });
 
                         // ignore: use_build_context_synchronously
                         FocusScope.of(context).unfocus();
@@ -167,6 +176,7 @@ class _DocsPageState extends State<DocsPage> {
                         // Navigate to the TTS route with the input text data
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
+                        _interstitialAdManager.showAd((){});
                         _showSaveBottomSheet(context, extractedText);
                       },
                     ),
@@ -392,7 +402,11 @@ class _DocsPageState extends State<DocsPage> {
                             height: 12,
                           ),
                           ElevatedButton(
-                            onPressed: pickFile,
+                            onPressed: () {
+                              _interstitialAdManager.showAd(() {
+                                pickFile();
+                              });
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Theme.of(context).colorScheme.primary,

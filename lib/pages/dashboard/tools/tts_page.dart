@@ -31,10 +31,12 @@ class _TtsPageState extends State<TtsPage> {
   String? _selectedVoice;
   List<Map<String, String>> filteredVoices = [];
   double _speechRate = 0.5;
+  final InterstitialAdManager _interstitialAdManager = InterstitialAdManager();
 
   @override
   void initState() {
     super.initState();
+    _interstitialAdManager.loadAd();
     flutterTts = FlutterTts();
     _textController = TextEditingController(text: widget.textData);
     textProcess();
@@ -652,17 +654,21 @@ class _TtsPageState extends State<TtsPage> {
                         // Navigate to the TTS route with the input text data
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
-                        _convertTextToSpeech();
+                        _interstitialAdManager.showAd(() {
+                          _convertTextToSpeech();
+                        });
                       },
                     ),
                     ListTile(
                       leading: const Icon(Icons.share_rounded),
                       title: const Text('Share'),
-                      onTap: () async {
+                      onTap: () {
                         // Share the input text data
-                        if (_textController.text.isNotEmpty) {
-                          await Share.share(_textController.text);
-                        }
+                        _interstitialAdManager.showAd(() async {
+                          if (_textController.text.isNotEmpty) {
+                            await Share.share(_textController.text);
+                          }
+                        });
 
                         // ignore: use_build_context_synchronously
                         FocusScope.of(context).unfocus();
@@ -675,6 +681,7 @@ class _TtsPageState extends State<TtsPage> {
                         // Navigate to the TTS route with the input text data
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
+                        _interstitialAdManager.showAd(() {});
                         _showSaveBottomSheet(context);
                       },
                     ),
