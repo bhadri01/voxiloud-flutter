@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voxiloud/pages/ads/ads.dart';
 import 'package:voxiloud/pages/dashboard/home/home_page.dart';
 import 'package:voxiloud/pages/dashboard/home/saved_page.dart';
 import 'package:voxiloud/pages/dashboard/home/settings_page.dart';
@@ -36,42 +37,54 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        children: _widgetOptions,
-      ),
-      bottomNavigationBar: NavigationBar(
-        height: 60,
-        destinations: const <NavigationDestination>[
-          NavigationDestination(
-            icon: Icon(
-              Icons.home_rounded,
-              size: 26,
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              children: _widgetOptions,
             ),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(
-              Icons.bookmark_rounded,
-              size: 26,
-            ),
-            label: 'Saved',
-          ),
-          NavigationDestination(
-            icon: Icon(
-              Icons.settings_rounded,
-              size: 26,
-            ),
-            label: 'Settings',
           ),
         ],
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
+      ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          NavigationBar(
+            height: 60,
+            destinations: const <NavigationDestination>[
+              NavigationDestination(
+                icon: Icon(
+                  Icons.home_rounded,
+                  size: 26,
+                ),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(
+                  Icons.bookmark_rounded,
+                  size: 26,
+                ),
+                label: 'Saved',
+              ),
+              NavigationDestination(
+                icon: Icon(
+                  Icons.settings_rounded,
+                  size: 26,
+                ),
+                label: 'Settings',
+              ),
+            ],
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onItemTapped,
+          ),
+          const BannerAdWidget(), // Add BannerAdWidget below the NavigationBar
+        ],
       ),
     );
   }

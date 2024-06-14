@@ -8,6 +8,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:read_pdf_text/read_pdf_text.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voxiloud/pages/ads/ads.dart';
 import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
 import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
 
@@ -619,6 +620,12 @@ class _DocsPageState extends State<DocsPage> {
             ),
           ),
         ),
+      ),
+      bottomSheet: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BannerAdWidget(),
+        ],
       ),
     );
   }

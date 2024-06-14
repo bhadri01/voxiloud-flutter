@@ -5,6 +5,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voxiloud/pages/ads/ads.dart';
 import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -263,108 +264,114 @@ class _TtsPageState extends State<TtsPage> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        color: Theme.of(context).cardColor,
-        child: Padding(
-          padding: EdgeInsets.only(bottom: bottomPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            color: Theme.of(context).cardColor,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: bottomPadding),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: GestureDetector(
-                      onTap: () => _showVoiceSelectionSheet(context),
-                      child: const Column(
-                        children: [
-                          Icon(
-                            Iconsax.voice_cricle,
-                            size: 26,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16),
+                        child: GestureDetector(
+                          onTap: () => _showVoiceSelectionSheet(context),
+                          child: const Column(
+                            children: [
+                              Icon(
+                                Iconsax.voice_cricle,
+                                size: 26,
+                              ),
+                              Text(
+                                'voice',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            'voice',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed: _prevPara,
+                            icon: const Icon(
+                              Icons.skip_previous_rounded,
+                              size: 26,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Material(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: const CircleBorder(),
+                              child: IconButton(
+                                icon: Icon(
+                                  ttsState == TtsState.playing
+                                      ? Icons.pause
+                                      : Icons.play_arrow,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
+                                  size: 26,
+                                ),
+                                onPressed: () {
+                                  if (ttsState == TtsState.playing) {
+                                    _pause();
+                                  } else {
+                                    _speak();
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _nextPara,
+                            icon: const Icon(
+                              Icons.skip_next_rounded,
+                              size: 26,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: _prevPara,
-                        icon: const Icon(
-                          Icons.skip_previous_rounded,
-                          size: 26,
-                        ),
-                      ),
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Material(
-                          color: Theme.of(context).colorScheme.primary,
-                          shape: const CircleBorder(),
-                          child: IconButton(
-                            icon: Icon(
-                              ttsState == TtsState.playing
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer,
-                              size: 26,
-                            ),
-                            onPressed: () {
-                              if (ttsState == TtsState.playing) {
-                                _pause();
-                              } else {
-                                _speak();
-                              }
-                            },
+                        padding: const EdgeInsets.only(right: 16),
+                        child: GestureDetector(
+                          onTap: _showSpeedSelectionSheet,
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.speed_rounded,
+                                size: 26,
+                              ),
+                              Text(
+                                '${_speechRate.toString()}x',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _nextPara,
-                        icon: const Icon(
-                          Icons.skip_next_rounded,
-                          size: 26,
                         ),
                       ),
                     ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: GestureDetector(
-                      onTap: _showSpeedSelectionSheet,
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.speed_rounded,
-                            size: 26,
-                          ),
-                          Text(
-                            '${_speechRate.toString()}x',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+          const BannerAdWidget(),
+        ],
       ),
     );
   }

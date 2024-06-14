@@ -5,6 +5,7 @@ import 'package:language_detector/language_detector.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:translator/translator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voxiloud/pages/ads/ads.dart';
 import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -941,6 +942,12 @@ class _TranslatePageState extends State<TranslatePage> {
                   )),
             ),
           ),
+        ),
+        bottomSheet: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BannerAdWidget(),
+          ],
         ),
       ),
     );
