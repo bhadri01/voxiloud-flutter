@@ -599,7 +599,7 @@ class DashboardComponents extends StatelessWidget {
             child: Icon(
               icon,
               size: 26,
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(
@@ -615,14 +615,14 @@ class DashboardComponents extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
+                      color: Theme.of(context).colorScheme.onSecondaryContainer),
                 ),
                 Text(
                   description,
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
+                      color: Theme.of(context).colorScheme.onSecondaryContainer),
                 ),
               ],
             ),

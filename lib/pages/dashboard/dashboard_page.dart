@@ -57,11 +57,12 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           NavigationBar(
             height: 60,
-            destinations: const <NavigationDestination>[
+            destinations: <NavigationDestination>[
               NavigationDestination(
                 icon: Icon(
                   Icons.home_rounded,
                   size: 26,
+                  color: _selectedIndex == 0 ? Theme.of(context).colorScheme.primary : null,
                 ),
                 label: 'Home',
               ),
@@ -69,6 +70,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 icon: Icon(
                   Icons.bookmark_rounded,
                   size: 26,
+                  color: _selectedIndex == 1 ? Theme.of(context).colorScheme.primary : null,
                 ),
                 label: 'Saved',
               ),
@@ -76,6 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 icon: Icon(
                   Icons.settings_rounded,
                   size: 26,
+                  color: _selectedIndex == 2 ? Theme.of(context).colorScheme.primary : null,
                 ),
                 label: 'Settings',
               ),
