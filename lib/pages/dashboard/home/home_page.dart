@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
-import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
-import 'package:voxiloud/themes/theme_provider.dart';
+import 'package:Voxiloud/pages/dashboard/tools/translate_page.dart';
+import 'package:Voxiloud/pages/dashboard/tools/tts_page.dart';
+import 'package:Voxiloud/themes/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<List<ActivityData>> fetchRecentActivities() async {
@@ -111,8 +111,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
                     height: 6,
                   ),
                   const DashboardComponents(
-                    name: "Input/Paste",
-                    description: "Convert your text to audio",
+                    name: "Text to Speech",
+                    description: "Convert your text to speech",
                     icon: Icons.voice_chat,
                     location: "/tts",
                   ),
@@ -120,7 +120,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
                     height: 12,
                   ),
                   const DashboardComponents(
-                    name: "Upload Documents",
+                    name: "Documents to Text",
                     description: "Convert your docx, pdf to text",
                     icon: Icons.document_scanner_rounded,
                     location: "/docs",
@@ -130,7 +130,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
                   ),
                   const DashboardComponents(
                     name: "Translate",
-                    description: "Translate your words",
+                    description: "Translate your Text",
                     icon: Icons.translate_rounded,
                     location: "/translate",
                   ),

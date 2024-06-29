@@ -8,9 +8,9 @@ import 'package:iconsax/iconsax.dart';
 import 'package:read_pdf_text/read_pdf_text.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voxiloud/pages/ads/ads.dart';
-import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
-import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
+import 'package:Voxiloud/pages/ads/ads.dart';
+import 'package:Voxiloud/pages/dashboard/tools/translate_page.dart';
+import 'package:Voxiloud/pages/dashboard/tools/tts_page.dart';
 
 class DocsPage extends StatefulWidget {
   const DocsPage({super.key});
@@ -328,7 +328,7 @@ class _DocsPageState extends State<DocsPage> {
     final prefs = await SharedPreferences.getInstance();
     final translations = prefs.getStringList('savedActivity') ?? [];
     final translation = {
-      'tag': 'docs',
+      'tag': 'Document to Text',
       'title': title,
       'text': extractedText,
       'date': DateTime.now().toString()
@@ -355,7 +355,7 @@ class _DocsPageState extends State<DocsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Docs to Text'),
+        title: const Text("Documents to Text"),
         actions: [
           Visibility(
             visible: extractedText.isNotEmpty,

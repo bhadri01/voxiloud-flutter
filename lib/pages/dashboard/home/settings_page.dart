@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:voxiloud/pages/dashboard/home/settings/translator_settings_page.dart';
-import 'package:voxiloud/pages/dashboard/home/settings/tts_settings_page.dart';
+import 'package:Voxiloud/pages/dashboard/home/settings/translator_settings_page.dart';
+import 'package:Voxiloud/pages/dashboard/home/settings/tts_settings_page.dart';
 import 'package:provider/provider.dart';
-import 'package:voxiloud/themes/theme_provider.dart';
+import 'package:Voxiloud/themes/theme_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

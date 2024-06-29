@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:voxiloud/pages/ads/ads.dart';
-import 'package:voxiloud/pages/dashboard/home/home_page.dart';
-import 'package:voxiloud/pages/dashboard/home/saved_page.dart';
-import 'package:voxiloud/pages/dashboard/home/settings_page.dart';
+import 'package:Voxiloud/pages/ads/ads.dart';
+import 'package:Voxiloud/pages/dashboard/home/home_page.dart';
+import 'package:Voxiloud/pages/dashboard/home/saved_page.dart';
+import 'package:Voxiloud/pages/dashboard/home/settings_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});

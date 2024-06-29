@@ -5,8 +5,8 @@ import 'package:iconsax/iconsax.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
-import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
+import 'package:Voxiloud/pages/dashboard/tools/translate_page.dart';
+import 'package:Voxiloud/pages/dashboard/tools/tts_page.dart';
 
 class SavedPage extends StatefulWidget {
   const SavedPage({super.key});

@@ -5,8 +5,8 @@ import 'package:language_detector/language_detector.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:translator/translator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voxiloud/pages/ads/ads.dart';
-import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
+import 'package:Voxiloud/pages/ads/ads.dart';
+import 'package:Voxiloud/pages/dashboard/tools/tts_page.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class TranslatePage extends StatefulWidget {
@@ -60,7 +60,6 @@ class _TranslatePageState extends State<TranslatePage> {
 
   Future<void> _checkInternetConnection() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
-    // ignore: unrelated_type_equality_checks
     if (connectivityResult == ConnectivityResult.none) {
       _showSnackbar("No internet connection");
     } else {
@@ -104,18 +103,16 @@ class _TranslatePageState extends State<TranslatePage> {
           _isTranslating = true;
         });
         try {
-          final translation = await _translator.translate(
-            _inputData,
-            from: _fromLanguageCode,
-            to: _toLanguageCode,
-          );
+          final translatedText = await _translateTextInChunks(
+              _inputData, _fromLanguageCode, _toLanguageCode);
           setState(() {
-            _translatedString = translation.text;
+            _translatedString = translatedText;
             _isTranslating = false;
           });
           _motinorTranslationActivity();
         } catch (e) {
           _showSnackbar("Error translating text: ${e.toString()}");
+          print("Error translating text: ${e.toString()}");
           setState(() {
             _translatedString = "";
             _isTranslating = false;
@@ -131,6 +128,39 @@ class _TranslatePageState extends State<TranslatePage> {
         _translatedString = "";
       });
     }
+  }
+
+  Future<String> _translateTextInChunks(
+      String text, String from, String to) async {
+    const int maxChunkSize = 4500; // Limit each chunk to 4500 characters.
+    List<String> chunks = _splitTextIntoChunks(text, maxChunkSize);
+    List<String> translatedChunks = [];
+
+    for (String chunk in chunks) {
+      final translation =
+          await _translator.translate(chunk, from: from, to: to);
+      translatedChunks.add(translation.text);
+    }
+
+    return translatedChunks.join(" ");
+  }
+
+  List<String> _splitTextIntoChunks(String text, int maxChunkSize) {
+    List<String> chunks = [];
+    int start = 0;
+    while (start < text.length) {
+      int end = start + maxChunkSize;
+      if (end < text.length && text[end] != ' ') {
+        end = text.lastIndexOf(' ', end);
+        if (end == -1 || end <= start) {
+          end = start + maxChunkSize;
+        }
+      }
+      end = end > text.length ? text.length : end;
+      chunks.add(text.substring(start, end).trim());
+      start = end;
+    }
+    return chunks;
   }
 
   void _showSnackbar(String text) {
@@ -534,7 +564,6 @@ class _TranslatePageState extends State<TranslatePage> {
                             await Share.share(_translatedString);
                           }
                         });
-                        // ignore: use_build_context_synchronously
                         FocusScope.of(context).unfocus();
                       },
                     ),
@@ -699,7 +728,7 @@ class _TranslatePageState extends State<TranslatePage> {
     final prefs = await SharedPreferences.getInstance();
     final translations = prefs.getStringList('savedActivity') ?? [];
     final translation = {
-      'tag': 'translate',
+      'tag': 'Translation',
       'title': title,
       'text': _inputData,
       'translatedText': _translatedString,

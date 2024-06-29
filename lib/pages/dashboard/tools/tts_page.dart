@@ -5,8 +5,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voxiloud/pages/ads/ads.dart';
-import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
+import 'package:Voxiloud/pages/ads/ads.dart';
+import 'package:Voxiloud/pages/dashboard/tools/translate_page.dart';
 import 'package:path_provider/path_provider.dart';
 
 class TtsPage extends StatefulWidget {
@@ -194,7 +194,7 @@ class _TtsPageState extends State<TtsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('TTS'),
+        title: const Text("Text to Speech"),
         actions: [
           Row(
             children: [
@@ -811,7 +811,7 @@ class _TtsPageState extends State<TtsPage> {
     final prefs = await SharedPreferences.getInstance();
     final translations = prefs.getStringList('savedActivity') ?? [];
     final translation = {
-      'tag': 'tts',
+      'tag': 'TTS',
       'title': title,
       'text': _textController.text,
       'date': DateTime.now().toString()

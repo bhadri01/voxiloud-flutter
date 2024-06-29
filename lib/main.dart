@@ -1,15 +1,15 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:voxiloud/pages/auth/auth_page.dart';
-import 'package:voxiloud/pages/dashboard/dashboard_page.dart';
-import 'package:voxiloud/pages/dashboard/home/home_page.dart';
-import 'package:voxiloud/pages/dashboard/tools/docs_page.dart';
-import 'package:voxiloud/pages/dashboard/tools/translate_page.dart';
-import 'package:voxiloud/pages/dashboard/tools/tts_page.dart';
-import 'package:voxiloud/pages/loading_page.dart';
+import 'package:Voxiloud/pages/auth/auth_page.dart';
+import 'package:Voxiloud/pages/dashboard/dashboard_page.dart';
+import 'package:Voxiloud/pages/dashboard/home/home_page.dart';
+import 'package:Voxiloud/pages/dashboard/tools/docs_page.dart';
+import 'package:Voxiloud/pages/dashboard/tools/translate_page.dart';
+import 'package:Voxiloud/pages/dashboard/tools/tts_page.dart';
+import 'package:Voxiloud/pages/loading_page.dart';
 import 'package:provider/provider.dart';
-import 'package:voxiloud/themes/theme_provider.dart';
-import 'package:voxiloud/themes/themes.dart';
+import 'package:Voxiloud/themes/theme_provider.dart';
+import 'package:Voxiloud/themes/themes.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() {
