@@ -556,11 +556,8 @@ class _SavedPageState extends State<SavedPage> {
                                                                               .colorScheme
                                                                               .tertiary),
                                                                       title:
-                                                                          Text(
-                                                                        'Close',
-                                                                        style: TextStyle(
-                                                                            color:
-                                                                                Theme.of(context).colorScheme.tertiary),
+                                                                          const Text(
+                                                                        'Close'
                                                                       ),
                                                                       onTap:
                                                                           () {

@@ -499,10 +499,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
                                                                               Icons.close_rounded,
                                                                               color: Theme.of(context).colorScheme.tertiary),
                                                                           title:
-                                                                              Text(
+                                                                              const Text(
                                                                             'Close',
-                                                                            style:
-                                                                                TextStyle(color: Theme.of(context).colorScheme.tertiary),
                                                                           ),
                                                                           onTap:
                                                                               () {
@@ -615,14 +613,16 @@ class DashboardComponents extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSecondaryContainer),
+                      color:
+                          Theme.of(context).colorScheme.onSecondaryContainer),
                 ),
                 Text(
                   description,
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: Theme.of(context).colorScheme.onSecondaryContainer),
+                      color:
+                          Theme.of(context).colorScheme.onSecondaryContainer),
                 ),
               ],
             ),

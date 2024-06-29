@@ -79,7 +79,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
           padding: const EdgeInsets.all(8),
           children: <Widget>[
             ListTile(
-              title: const Text('Primary Background Color'),
+              title: const Text('Paragraph highlight color'),
               trailing: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
@@ -96,7 +96,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
               }),
             ),
             ListTile(
-              title: const Text('Secondary Background Color'),
+              title: const Text('Paragraph text color'),
               trailing: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
@@ -113,7 +113,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
               }),
             ),
             ListTile(
-              title: const Text('Primary Foreground Color'),
+              title: const Text('Word highlight color'),
               trailing: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
@@ -130,7 +130,7 @@ class _TTSSettingsPageState extends State<TTSSettingsPage> {
               }),
             ),
             ListTile(
-              title: const Text('Secondary Foreground Color'),
+              title: const Text('Word text color'),
               trailing: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),

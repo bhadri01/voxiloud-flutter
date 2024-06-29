@@ -176,7 +176,7 @@ class _DocsPageState extends State<DocsPage> {
                         // Navigate to the TTS route with the input text data
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
-                        _interstitialAdManager.showAd((){});
+                        _interstitialAdManager.showAd(() {});
                         _showSaveBottomSheet(context, extractedText);
                       },
                     ),
@@ -207,12 +207,7 @@ class _DocsPageState extends State<DocsPage> {
                         Icons.close_rounded,
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
-                      title: Text(
-                        'Close',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.tertiary,
-                        ),
-                      ),
+                      title: const Text('Close'),
                       onTap: () {
                         // Navigate to the TTS route with the input text data
                         Navigator.pop(context);
@@ -262,7 +257,10 @@ class _DocsPageState extends State<DocsPage> {
                           });
                         }, // Set the maximum number of lines to 1
                         decoration: const InputDecoration(
-                          labelText: 'Title',
+                          labelText: 'Enter title to save',
+                          labelStyle: TextStyle(
+                            color: Colors.grey
+                          ),
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -304,10 +302,12 @@ class _DocsPageState extends State<DocsPage> {
                                   Theme.of(context).colorScheme.onPrimary,
                             ),
                             onPressed: () {
-                              // Save the translation with the title
-                              Navigator.pop(context);
-                              FocusScope.of(context).unfocus();
-                              _saveDocs(title);
+                              if (title.isNotEmpty) {
+                                // Save the translation with the title
+                                Navigator.pop(context);
+                                FocusScope.of(context).unfocus();
+                                _saveDocs(title);
+                              }
                             },
                             child: const Text('Save'),
                           ),

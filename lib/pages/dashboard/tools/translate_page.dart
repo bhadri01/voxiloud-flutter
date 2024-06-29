@@ -609,12 +609,7 @@ class _TranslatePageState extends State<TranslatePage> {
                         Icons.close_rounded,
                         color: Theme.of(context).colorScheme.tertiary,
                       ),
-                      title: Text(
-                        'Close',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.tertiary,
-                        ),
-                      ),
+                      title: const Text('Close'),
                       onTap: () {
                         Navigator.pop(context);
                         FocusScope.of(context).unfocus();
@@ -663,7 +658,10 @@ class _TranslatePageState extends State<TranslatePage> {
                           });
                         },
                         decoration: const InputDecoration(
-                          labelText: 'Title',
+                          labelText: 'Enter title to save',
+                          labelStyle: TextStyle(
+                            color: Colors.grey
+                          ),
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -705,9 +703,11 @@ class _TranslatePageState extends State<TranslatePage> {
                                   Theme.of(context).colorScheme.onPrimary,
                             ),
                             onPressed: () {
-                              Navigator.pop(context);
-                              FocusScope.of(context).unfocus();
-                              _saveTranslation(title);
+                              if (title.isNotEmpty) {
+                                Navigator.pop(context);
+                                FocusScope.of(context).unfocus();
+                                _saveTranslation(title);
+                              }
                             },
                             child: const Text('Save'),
                           ),
@@ -801,7 +801,7 @@ class _TranslatePageState extends State<TranslatePage> {
                                       style: const TextStyle(fontSize: 12)))),
                           IconButton(
                             onPressed: () {},
-                            icon: const Icon(Icons.switch_left_rounded),
+                            icon: const Icon(Icons.arrow_right_alt_rounded,size: 30,),
                           ),
                           Expanded(
                               flex: 5,

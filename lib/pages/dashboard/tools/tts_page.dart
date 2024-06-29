@@ -745,7 +745,10 @@ class _TtsPageState extends State<TtsPage> {
                           });
                         }, // Set the maximum number of lines to 1
                         decoration: const InputDecoration(
-                          labelText: 'Title',
+                          labelText: 'Enter title to save',
+                          labelStyle: TextStyle(
+                            color: Colors.grey
+                          ),
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -787,10 +790,12 @@ class _TtsPageState extends State<TtsPage> {
                                   Theme.of(context).colorScheme.onPrimary,
                             ),
                             onPressed: () {
-                              // Save the translation with the title
-                              Navigator.pop(context);
-                              FocusScope.of(context).unfocus();
-                              _saveTTS(title);
+                              if (title.isNotEmpty) {
+                                // Save the translation with the title
+                                Navigator.pop(context);
+                                FocusScope.of(context).unfocus();
+                                _saveTTS(title);
+                              }
                             },
                             child: const Text('Save'),
                           ),
